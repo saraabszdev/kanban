@@ -1,0 +1,81 @@
+import { describe, expect, it } from "vitest";
+import { boardReducer, initialBoard } from "./board";
+
+describe("boardReducer", () => {
+  it("starts with five named columns and sample cards", () => {
+    expect(initialBoard).toHaveLength(5);
+    expect(initialBoard.reduce((count, column) => count + column.cards.length, 0)).toBe(8);
+    expect(initialBoard.every((column) => column.name.length > 0)).toBe(true);
+  });
+
+  it("renames a column without changing its cards", () => {
+    const state = boardReducer(initialBoard, {
+      type: "rename-column",
+      columnId: "ideas",
+      name: "ایده‌های تازه",
+    });
+
+    expect(state[0].name).toBe("ایده‌های تازه");
+    expect(state[0].cards).toEqual(initialBoard[0].cards);
+    expect(initialBoard[0].name).toBe("ایده‌ها");
+  });
+
+  it("adds a card to the requested column", () => {
+    const card = { id: "new-card", title: "کار تازه", details: "جزئیات" };
+    const state = boardReducer(initialBoard, {
+      type: "add-card",
+      columnId: "ideas",
+      card,
+    });
+
+    expect(state[0].cards.at(-1)).toEqual(card);
+    expect(state[1].cards).toEqual(initialBoard[1].cards);
+    expect(initialBoard[0].cards).toHaveLength(2);
+  });
+
+  it("deletes only the selected card from its column", () => {
+    const state = boardReducer(initialBoard, {
+      type: "delete-card",
+      columnId: "ideas",
+      cardId: "card-1",
+    });
+
+    expect(state[0].cards.map((card) => card.id)).toEqual(["card-2"]);
+    expect(state[1].cards).toEqual(initialBoard[1].cards);
+  });
+
+  it("moves a card from its source to the end of the destination", () => {
+    const state = boardReducer(initialBoard, {
+      type: "move-card",
+      cardId: "card-1",
+      fromColumnId: "ideas",
+      toColumnId: "planned",
+    });
+
+    expect(state[0].cards.map((card) => card.id)).toEqual(["card-2"]);
+    expect(state[1].cards.map((card) => card.id)).toEqual([
+      "card-3",
+      "card-4",
+      "card-1",
+    ]);
+    expect(initialBoard[0].cards).toHaveLength(2);
+  });
+
+  it("leaves the board unchanged for a same-column or invalid move", () => {
+    const sameColumn = boardReducer(initialBoard, {
+      type: "move-card",
+      cardId: "card-1",
+      fromColumnId: "ideas",
+      toColumnId: "ideas",
+    });
+    const invalid = boardReducer(initialBoard, {
+      type: "move-card",
+      cardId: "missing-card",
+      fromColumnId: "ideas",
+      toColumnId: "planned",
+    });
+
+    expect(sameColumn).toBe(initialBoard);
+    expect(invalid).toBe(initialBoard);
+  });
+});
