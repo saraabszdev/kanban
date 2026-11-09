@@ -61,13 +61,38 @@ describe("boardReducer", () => {
     expect(initialBoard[0].cards).toHaveLength(2);
   });
 
-  it("leaves the board unchanged for a same-column or invalid move", () => {
-    const sameColumn = boardReducer(initialBoard, {
+  it("moves a card down within its column", () => {
+    const state = boardReducer(initialBoard, {
       type: "move-card",
       cardId: "card-1",
       fromColumnId: "ideas",
       toColumnId: "ideas",
+      toCardId: "card-2",
     });
+
+    expect(state[0].cards.map((card) => card.id)).toEqual(["card-2", "card-1"]);
+  });
+
+  it("moves a card up within its column", () => {
+    const reordered = boardReducer(initialBoard, {
+      type: "move-card",
+      cardId: "card-1",
+      fromColumnId: "ideas",
+      toColumnId: "ideas",
+      toCardId: "card-2",
+    });
+    const state = boardReducer(reordered, {
+      type: "move-card",
+      cardId: "card-2",
+      fromColumnId: "ideas",
+      toColumnId: "ideas",
+      toCardId: "card-1",
+    });
+
+    expect(state[0].cards.map((card) => card.id)).toEqual(["card-1", "card-2"]);
+  });
+
+  it("leaves the board unchanged for invalid moves", () => {
     const invalid = boardReducer(initialBoard, {
       type: "move-card",
       cardId: "missing-card",
@@ -75,7 +100,6 @@ describe("boardReducer", () => {
       toColumnId: "planned",
     });
 
-    expect(sameColumn).toBe(initialBoard);
     expect(invalid).toBe(initialBoard);
   });
 });

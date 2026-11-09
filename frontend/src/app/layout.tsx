@@ -6,7 +6,7 @@ import "@fontsource/vazirmatn/700.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "روال | تخته‌ی پروژه",
+  title: "تسکتو | تخته‌ی پروژه",
   description: "تخته‌ی کانبان ساده برای برنامه‌ریزی و پیگیری کارها.",
 };
 

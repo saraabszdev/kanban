@@ -14,6 +14,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("shows one populated board with exactly five columns", async ({ page }) => {
+  await expect(page.locator(".brand")).toHaveText("تسکتو");
+  await expect(page).toHaveTitle("تسکتو | تخته‌ی پروژه");
   await expect(page.getByRole("heading", { name: "راه‌اندازی محصول جدید" })).toBeVisible();
   await expect(page.locator(".board-column")).toHaveCount(5);
   await expect(page.locator("body")).toHaveCSS("font-family", "Vazirmatn, sans-serif");
@@ -112,6 +114,34 @@ test("moves a card to another column by dragging its handle", async ({ page }) =
     "بازطراحی صفحه اصلی",
   );
   await expect(destination.getByRole("article", { name: "بازطراحی صفحه اصلی" })).toBeVisible();
+});
+
+test("reorders cards upward and downward within the same column", async ({ page }) => {
+  const ideas = page.getByRole("region", { name: "ایده‌ها" });
+  const cardTitles = () => ideas.locator(".task-card__title").allTextContents();
+
+  async function dragCard(title: string, targetTitle: string) {
+    const handle = page.getByRole("button", { name: `جابجایی ${title}` });
+    const target = ideas.getByRole("article", { name: targetTitle });
+    const from = await handle.boundingBox();
+    const to = await target.boundingBox();
+    if (!from || !to) throw new Error("Drag targets are not visible");
+
+    const startX = from.x + from.width / 2;
+    const startY = from.y + from.height / 2;
+    const endX = to.x + to.width / 2;
+    const endY = to.y + to.height / 2;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(endX, endY, { steps: 12 });
+    await page.mouse.up();
+  }
+
+  await dragCard("بازطراحی صفحه اصلی", "بررسی بازخورد کاربران");
+  await expect.poll(cardTitles).toEqual(["بررسی بازخورد کاربران", "بازطراحی صفحه اصلی"]);
+
+  await dragCard("بازطراحی صفحه اصلی", "بررسی بازخورد کاربران");
+  await expect.poll(cardTitles).toEqual(["بازطراحی صفحه اصلی", "بررسی بازخورد کاربران"]);
 });
 
 test("keeps all five columns accessible on a narrow screen", async ({ page }) => {

@@ -16,7 +16,13 @@ export type BoardAction =
   | { type: "rename-column"; columnId: string; name: string }
   | { type: "add-card"; columnId: string; card: BoardCard }
   | { type: "delete-card"; columnId: string; cardId: string }
-  | { type: "move-card"; cardId: string; fromColumnId: string; toColumnId: string };
+  | {
+      type: "move-card";
+      cardId: string;
+      fromColumnId: string;
+      toColumnId: string;
+      toCardId?: string;
+    };
 
 export const initialBoard: BoardState = [
   {
@@ -110,12 +116,30 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
           : column,
       );
     case "move-card": {
-      if (action.fromColumnId === action.toColumnId) return state;
-
       const source = state.find((column) => column.id === action.fromColumnId);
       const destination = state.find((column) => column.id === action.toColumnId);
-      const card = source?.cards.find((item) => item.id === action.cardId);
-      if (!source || !destination || !card) return state;
+      const sourceIndex = source?.cards.findIndex((item) => item.id === action.cardId) ?? -1;
+      if (!source || !destination || sourceIndex === -1) return state;
+
+      const destinationIndex = action.toCardId
+        ? destination.cards.findIndex((item) => item.id === action.toCardId)
+        : destination.cards.length;
+      if (destinationIndex === -1) return state;
+
+      if (source.id === destination.id) {
+        if (sourceIndex === destinationIndex) return state;
+
+        const cards = [...source.cards];
+        const [card] = cards.splice(sourceIndex, 1);
+        if (!card) return state;
+        cards.splice(destinationIndex, 0, card);
+        return state.map((column) =>
+          column.id === source.id ? { ...column, cards } : column,
+        );
+      }
+
+      const card = source.cards[sourceIndex];
+      if (!card) return state;
 
       return state.map((column) => {
         if (column.id === action.fromColumnId) {
@@ -125,7 +149,9 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
           };
         }
         if (column.id === action.toColumnId) {
-          return { ...column, cards: [...column.cards, card] };
+          const cards = [...column.cards];
+          cards.splice(destinationIndex, 0, card);
+          return { ...column, cards };
         }
         return column;
       });

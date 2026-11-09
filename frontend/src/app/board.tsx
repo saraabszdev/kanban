@@ -4,18 +4,23 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
-  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   Check,
   Grip,
-  LayoutGrid,
   Plus,
+  SquareKanban,
   Sparkles,
   Trash2,
   X,
@@ -38,9 +43,9 @@ function CardItem({
   onDelete: () => void;
 }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
-    useDraggable({
+    useSortable({
       id: card.id,
-      data: { columnId },
+      data: { columnId, type: "card" },
     });
 
   return (
@@ -153,7 +158,7 @@ function BoardColumnView({
   const [showForm, setShowForm] = useState(false);
   const { isOver, setNodeRef } = useDroppable({
     id: `column:${column.id}`,
-    data: { columnId: column.id },
+    data: { columnId: column.id, type: "column" },
   });
 
   function saveName() {
@@ -215,14 +220,19 @@ function BoardColumnView({
       </header>
 
       <div className="column-cards">
-        {column.cards.map((card) => (
-          <CardItem
-            key={card.id}
-            card={card}
-            columnId={column.id}
-            onDelete={() => onDeleteCard(card.id)}
-          />
-        ))}
+        <SortableContext
+          items={column.cards.map((card) => card.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {column.cards.map((card) => (
+            <CardItem
+              key={card.id}
+              card={card}
+              columnId={column.id}
+              onDelete={() => onDeleteCard(card.id)}
+            />
+          ))}
+        </SortableContext>
         {showForm ? (
           <AddCardForm
             onAdd={(title, details) => {
@@ -252,7 +262,7 @@ export default function Board() {
   const [columns, dispatch] = useReducer(boardReducer, initialBoard);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
   const cardCount = useMemo(
     () => columns.reduce((total, column) => total + column.cards.length, 0),
@@ -261,28 +271,31 @@ export default function Board() {
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    if (!over) return;
+    if (!over || over.id === active.id) return;
 
     const fromColumnId = active.data.current?.columnId;
     const toColumnId = over.data.current?.columnId;
     if (typeof fromColumnId !== "string" || typeof toColumnId !== "string") return;
+    const toCardId =
+      over.data.current?.type === "card" ? String(over.id) : undefined;
 
     dispatch({
       type: "move-card",
       cardId: String(active.id),
       fromColumnId,
       toColumnId,
+      toCardId,
     });
   }
 
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div className="brand" aria-label="روال">
+        <div className="brand" aria-label="تسکتو">
           <span className="brand-mark">
-            <LayoutGrid size={18} strokeWidth={2.2} />
+            <SquareKanban size={18} strokeWidth={2.2} />
           </span>
-          <span>روال</span>
+          <span>تسکتو</span>
         </div>
         <div className="topbar-divider" />
         <div className="workspace-label">
