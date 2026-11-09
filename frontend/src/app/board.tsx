@@ -260,6 +260,8 @@ function BoardColumnView({
 
 export default function Board() {
   const [columns, dispatch] = useReducer(boardReducer, initialBoard);
+  const [showAddColumnForm, setShowAddColumnForm] = useState(false);
+  const [newColumnName, setNewColumnName] = useState("");
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -268,6 +270,19 @@ export default function Board() {
     () => columns.reduce((total, column) => total + column.cards.length, 0),
     [columns],
   );
+
+  function addColumn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newColumnName.trim();
+    if (!name) return;
+
+    dispatch({
+      type: "add-column",
+      column: { id: crypto.randomUUID(), name, cards: [] },
+    });
+    setNewColumnName("");
+    setShowAddColumnForm(false);
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -335,8 +350,51 @@ export default function Board() {
             <h2>نمای کلی کارها</h2>
             <span className="board-toolbar__hint">برای تغییر نام، روی عنوان ستون بزنید</span>
           </div>
-          <span className="board-count">{columns.length} ستون</span>
+          <div className="board-toolbar__actions">
+            <span className="board-count">{columns.length} ستون</span>
+            <button
+              className="button button--primary button--small add-column-button"
+              type="button"
+              aria-expanded={showAddColumnForm}
+              onClick={() => setShowAddColumnForm((visible) => !visible)}
+            >
+              <Plus size={15} />
+              افزودن ستون
+            </button>
+          </div>
         </div>
+
+        {showAddColumnForm ? (
+          <form className="add-column-form" onSubmit={addColumn}>
+            <label className="sr-only" htmlFor="new-column-name">
+              نام ستون جدید
+            </label>
+            <input
+              id="new-column-name"
+              autoFocus
+              required
+              maxLength={40}
+              value={newColumnName}
+              onChange={(event) => setNewColumnName(event.target.value)}
+              placeholder="نام ستون جدید"
+            />
+            <button className="button button--primary button--small" type="submit">
+              <Check size={15} />
+              ایجاد ستون
+            </button>
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="انصراف از افزودن ستون"
+              onClick={() => {
+                setShowAddColumnForm(false);
+                setNewColumnName("");
+              }}
+            >
+              <X size={17} />
+            </button>
+          </form>
+        ) : null}
 
         <DndContext id="project-board-dnd" sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="board-scroll">

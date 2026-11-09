@@ -14,6 +14,7 @@ export type BoardState = BoardColumn[];
 
 export type BoardAction =
   | { type: "rename-column"; columnId: string; name: string }
+  | { type: "add-column"; column: BoardColumn }
   | { type: "add-card"; columnId: string; card: BoardCard }
   | { type: "delete-card"; columnId: string; cardId: string }
   | {
@@ -103,6 +104,8 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
       return state.map((column) =>
         column.id === action.columnId ? { ...column, name: action.name } : column,
       );
+    case "add-column":
+      return [...state, action.column];
     case "add-card":
       return state.map((column) =>
         column.id === action.columnId

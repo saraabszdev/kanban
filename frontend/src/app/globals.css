@@ -316,6 +316,41 @@ button {
   box-shadow: 0 1px 2px rgba(27, 29, 48, 0.025);
 }
 
+.board-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-column-button {
+  white-space: nowrap;
+}
+
+.add-column-form {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 12px;
+}
+
+.add-column-form input {
+  width: min(260px, 100%);
+  min-height: 31px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 11px;
+  text-align: right;
+}
+
+.add-column-form input:focus {
+  border-color: rgba(117, 104, 232, 0.62);
+  box-shadow: 0 0 0 3px rgba(117, 104, 232, 0.11);
+}
+
 .board-scroll {
   overflow-x: auto;
   padding: 2px 1px 14px;
@@ -326,6 +361,8 @@ button {
 .board {
   display: grid;
   grid-template-columns: repeat(5, minmax(230px, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(230px, 1fr);
   align-items: start;
   gap: 13px;
   min-width: 1190px;
@@ -793,6 +830,7 @@ a:focus-visible {
 
   .board {
     grid-template-columns: repeat(5, minmax(255px, 82vw));
+    grid-auto-columns: minmax(255px, 82vw);
     min-width: 0;
   }
 

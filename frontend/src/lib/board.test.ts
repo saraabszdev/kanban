@@ -20,6 +20,16 @@ describe("boardReducer", () => {
     expect(initialBoard[0].name).toBe("ایده‌ها");
   });
 
+  it("adds a new empty column at the end of the board", () => {
+    const column = { id: "new-column", name: "منتظر", cards: [] };
+    const state = boardReducer(initialBoard, { type: "add-column", column });
+
+    expect(state).toHaveLength(6);
+    expect(state.at(-1)).toEqual(column);
+    expect(state.slice(0, -1)).toEqual(initialBoard);
+    expect(initialBoard).toHaveLength(5);
+  });
+
   it("adds a card to the requested column", () => {
     const card = { id: "new-card", title: "کار تازه", details: "جزئیات" };
     const state = boardReducer(initialBoard, {

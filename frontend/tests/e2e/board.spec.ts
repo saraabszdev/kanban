@@ -85,6 +85,24 @@ test("renames a column and adds then deletes a card", async ({ page }) => {
   await expect(newCard).toHaveCount(0);
 });
 
+test("adds a column and allows horizontal scrolling to reach it", async ({ page }) => {
+  await page.getByRole("button", { name: "افزودن ستون" }).click();
+  await page.getByRole("textbox", { name: "نام ستون جدید" }).fill("منتظر");
+  await page.getByRole("button", { name: "ایجاد ستون" }).click();
+
+  const boardScroll = page.locator(".board-scroll");
+  const newColumn = page.getByRole("region", { name: "منتظر" });
+  await expect(page.locator(".board-column")).toHaveCount(6);
+  const dimensions = await boardScroll.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth);
+
+  await newColumn.scrollIntoViewIfNeeded();
+  await expect(newColumn).toBeVisible();
+});
+
 test("moves a card to another column by dragging its handle", async ({ page }) => {
   const handle = page.getByRole("button", { name: "جابجایی بازطراحی صفحه اصلی" });
   const destination = page.getByRole("region", { name: "در صف" });
